@@ -37,7 +37,7 @@ export class UserService {
         } else{
             user.role = Role.Client;
         }
-        return this.UserRepository.save(user);
+        return await this.UserRepository.save(user);
     }   
 
     async create(user2: CreateUserDTO): Promise<User> {

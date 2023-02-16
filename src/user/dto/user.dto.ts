@@ -5,7 +5,6 @@ export class CreateUserDTO {
   @IsNotEmpty()
   @ApiProperty({description: 'required'})
   readonly name: string
-  @ApiProperty()
   @IsNotEmpty()
   @ApiProperty({description: 'required'})
   readonly firstname: string

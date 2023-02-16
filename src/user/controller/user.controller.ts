@@ -16,7 +16,6 @@ export class UserController {
     @UseGuards(JwtAuthGuard)
     async findAll(@Request() req : any): Promise<User[]> {
         if (req.user.role != "Admin") {
-            console.log(req.user.role)
             throw new UnauthorizedException();
         }
         return this.UsersService.findAll();
