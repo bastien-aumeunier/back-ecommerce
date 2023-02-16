@@ -4,6 +4,7 @@ import { User } from "../entity/user.entity";
 import { CreateUserDTO, LoginUserDTO, UpdateRoleDTO } from "../dto/user.dto";
 import { AuthService } from '../../auth/services/auth.service';
 import { JwtAuthGuard } from "src/auth/guard/jwt-auth.guard";
+import verifyUUID from "src/utils/uuid.verify";
 
 @Controller('users')
 export class UserController {
@@ -32,27 +33,32 @@ export class UserController {
     async findOne(@Param('id') id, @Request() req :any): Promise<User> {
         if (req.user.role != "Admin") {
             throw new UnauthorizedException();
-        }  else {
-            const user = await this.UsersService.findOneById(id);
-            if (!user) {
-                throw new NotFoundException();
-            }
-        return user;
+        }  else if(!verifyUUID(id) ) {
+            throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
+        } 
+        const user = await this.UsersService.findOneById(id);
+        if (!user) {
+            throw new NotFoundException();
         }
+        user.password = ""
+        return user;
     }
 
 
     @Post('setrole')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
-    async setRole(@Body() body : UpdateRoleDTO) {
-        const id = body.id;
-        const role = body.role;
-        const user = await this.UsersService.findOneById(id);
+    async setRole(@Body() body : UpdateRoleDTO, @Request() req :any) {
+        if (req.user.role != "Admin") {
+            throw new UnauthorizedException();
+        } else if(!verifyUUID(body.id) ) {
+            throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
+        }
+        const user = await this.UsersService.findOneById(body.id);
         if (!user) {
             throw new NotFoundException();
         }
-        return await this.UsersService.updateRole(user, role);
+        return await this.UsersService.updateRole(user, body.role);
     }
     
 

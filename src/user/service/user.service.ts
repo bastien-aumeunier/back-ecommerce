@@ -14,7 +14,6 @@ export class UserService {
 
     async findAll(): Promise<User[]> {
         return await this.UserRepository.find();
-        //ne pas renvoyer les pwd
     }
 
     async findOneByEmail(email: string): Promise<User> {
@@ -22,9 +21,8 @@ export class UserService {
     }
 
     async findOneById(id: string): Promise<User> {
-        const user = await this.UserRepository.findOne({where: { id: id }})
-        user.password = ""
-        return user;
+        return await this.UserRepository.findOne({where: { id: id }});
+        
         
     }
 
