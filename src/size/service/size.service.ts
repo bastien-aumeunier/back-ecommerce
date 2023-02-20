@@ -14,6 +14,11 @@ export class SizeService {
         return await this.SizeRepository.find();
     }
 
+    async findByCategory(category: string): Promise<Size[]> {
+        category = category.toLowerCase();
+        return await this.SizeRepository.find({ where: { category: category } });
+    }
+
     async findOneById(id: string): Promise<Size> {
         return await this.SizeRepository.findOne({ where: { id: id } });
     }
