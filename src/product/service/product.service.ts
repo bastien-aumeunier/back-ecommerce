@@ -11,8 +11,13 @@ export class ProductService {
     @InjectRepository(Product) private ProductRepository:  Repository<Product>,
  ){}
 
+
     async findAll(): Promise<Product[]> {
         return await this.ProductRepository.find()
+    }
+
+    async search(params: string): Promise<Product[]> {
+        return await this.ProductRepository.find({where: { name: params }})
     }
 
     async findOneById(id: string): Promise<Product> {
