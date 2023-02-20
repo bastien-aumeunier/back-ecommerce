@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, HttpException, HttpStatus, NotFoundException, Param, Post, Request, UnauthorizedException, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/auth/guard/jwt-auth.guard";
 import verifyUUID from "src/utils/uuid.verify";
 import { CreateBrandDTO } from "../dto/brand.dto";
@@ -12,12 +13,14 @@ export class BrandController {
     ) {}
 
     @Get()
+    @ApiTags('Marque')
     @UseGuards(JwtAuthGuard)
     async findAll(): Promise<Brand[]> {
         return this.BrandService.findAll();
     }
 
     @Get(':id')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     async findOneById(@Param('id') id: string, @Request() req : any): Promise<Brand> {
         if (req.user.role != "Admin") {
@@ -32,7 +35,8 @@ export class BrandController {
         return brand;
     }
 
-    @Post('newbrand')
+    @Post('new-brand')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
     async create(@Request() req : any, @Body() body : CreateBrandDTO) {
@@ -47,6 +51,7 @@ export class BrandController {
     }
 
     @Delete(':id')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     async deleteBrand(@Param('id') id: string, @Request() req :any): Promise<Brand[]> {
         if (req.user.role != "Admin") {

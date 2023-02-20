@@ -7,6 +7,7 @@ import verifyUUID from 'src/utils/uuid.verify';
 import { BrandService } from "src/brand/service/brand.service";
 import { CategoryService } from "src/category/service/category.service";
 import { SizeService } from "src/size/service/size.service";
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('products')
 export class ProductController { 
@@ -18,11 +19,13 @@ export class ProductController {
     ) {}
 
     @Get()
+    @ApiTags('Produits')
     async findAll(): Promise<Product[]> {
         return this.ProductService.findAll();
     }
 
     @Get(':id')
+    @ApiTags('Produits')
     async findOne(@Param('id') id: string): Promise<Product> {
         if(!verifyUUID(id) ) {
             throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
@@ -55,7 +58,13 @@ export class ProductController {
         return await this.ProductService.findByCategory(category.name);
     }
     */
-    @Post('newproduct')
+
+
+
+
+
+    @Post('new-product')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
     async create(@Request() req : any, @Body() body : CreateProductDTO) {
@@ -75,7 +84,8 @@ export class ProductController {
         return await this.ProductService.create(body);
     }
 
-    @Post('setreduction')
+    @Post('set-reduction')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
     async setReduction(@Request() req : any, @Body() body : CreateReductionDTO) {
@@ -91,7 +101,8 @@ export class ProductController {
         return await this.ProductService.setReduction(body.id, body.reduction);
     }
 
-    @Post('removereduction')
+    @Post('remove-reduction')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
     async removeReduction(@Request() req : any, @Body() body : RemoveReductionDTO) {
@@ -108,6 +119,7 @@ export class ProductController {
     }
 
     @Delete(':id')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     async delete(@Param('id') id, @Request() req :any): Promise<Product[]> {
         if (req.user.role != "Admin") {

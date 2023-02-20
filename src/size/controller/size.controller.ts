@@ -5,6 +5,7 @@ import { CreateSizeDTO } from "../dto/size.dto";
 import { Size } from "../entity/size.entity";
 import { SizeService } from "../service/size.service";
 import { CategoryService } from "src/category/service/category.service";
+import { ApiTags } from "@nestjs/swagger";
 
 @Controller('size')
 export class SizeController {
@@ -14,11 +15,23 @@ export class SizeController {
     ) {}
 
     @Get()
+    @ApiTags('Admin')
     async findAll(): Promise<Size[]> {
         return this.SizeService.findAll();
     }
 
+    @Get('category/:name')
+    @ApiTags('Size by category')
+    async findByCategory(@Param('name') name: string): Promise<Size[]> {
+        const category = await this.CategoryService.findOneByName(name);
+        if (!category) {
+            throw new NotFoundException("Category not found");
+        }
+        return await this.SizeService.findByCategory(category.name);
+    } 
+
     @Get(':id')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     async findOneById(@Param('id') id: string, @Request() req: any): Promise<Size> {
         if (req.user.role != "Admin") {
@@ -33,7 +46,8 @@ export class SizeController {
         return size;
     }
 
-    @Post('newsize')
+    @Post('new-size')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
     async create(@Request() req: any, @Body() body: CreateSizeDTO) {
@@ -52,6 +66,7 @@ export class SizeController {
     }
 
     @Delete(':id')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     async deleteSize(@Param('id') id: string, @Request() req: any): Promise<Size[]> {
         if (req.user.role != "Admin") {

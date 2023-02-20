@@ -4,6 +4,7 @@ import { Body, Controller, Delete, Get, HttpException, HttpStatus, NotFoundExcep
 import { JwtAuthGuard } from "src/auth/guard/jwt-auth.guard";
 import { CreateCategoryDTO } from '../dto/category.dto';
 import verifyUUID from 'src/utils/uuid.verify';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('categories')
 export class CategoryController {
@@ -12,11 +13,13 @@ export class CategoryController {
     ) {}
 
     @Get()
+    @ApiTags('Categories')
     async findAll(): Promise<Category[]> {
         return this.CategoryService.findAll();
     }
 
     @Get(':id')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     async findOneById(@Param('id') id: string, @Request() req : any): Promise<Category> {
         if (req.user.role != "Admin") {
@@ -31,7 +34,8 @@ export class CategoryController {
         return category;
     }
 
-    @Post('newcategory')
+    @Post('new-category')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
     async create(@Request() req : any, @Body() body : CreateCategoryDTO) {
@@ -46,6 +50,7 @@ export class CategoryController {
     }
 
     @Delete(':id')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     async deleteCategory(@Param('id') id: string, @Request() req :any): Promise<Category[]> {
         if (req.user.role != "Admin") {

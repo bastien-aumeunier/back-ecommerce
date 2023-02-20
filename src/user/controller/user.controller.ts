@@ -5,6 +5,7 @@ import { CreateUserDTO, LoginUserDTO, UpdateRoleDTO } from "../dto/user.dto";
 import { AuthService } from '../../auth/services/auth.service';
 import { JwtAuthGuard } from "src/auth/guard/jwt-auth.guard";
 import verifyUUID from "src/utils/uuid.verify";
+import { ApiTags } from "@nestjs/swagger";
 
 @Controller('users')
 export class UserController {
@@ -14,6 +15,7 @@ export class UserController {
     ) {}
 
     @Get()
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     async findAll(@Request() req : any): Promise<User[]> {
         if (req.user.role != "Admin") {
@@ -23,12 +25,14 @@ export class UserController {
     }
 
     @Get('account')
+    @ApiTags('User')
     @UseGuards(JwtAuthGuard)
     async myAccount(@Request() req : any){
         return await this.UsersService.findOneById(req.user.id);
     }
 
     @Get(':id')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     async findOne(@Param('id') id, @Request() req :any): Promise<User> {
         if (req.user.role != "Admin") {
@@ -46,6 +50,7 @@ export class UserController {
 
 
     @Post('setrole')
+    @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
     async setRole(@Body() body : UpdateRoleDTO, @Request() req :any) {
@@ -64,6 +69,7 @@ export class UserController {
 
 
     @Post('register')
+    @ApiTags('User')
     @UsePipes(ValidationPipe)
     async create(@Body() user: CreateUserDTO): Promise<User> {
         const user2 = await this.UsersService.findOneByEmail(user.email);
@@ -76,6 +82,7 @@ export class UserController {
     }
 
     @Post('login')
+    @ApiTags('User')
     @UsePipes(ValidationPipe)
     async login(@Body() user: LoginUserDTO) {
         return this.AuthService.login(user);
