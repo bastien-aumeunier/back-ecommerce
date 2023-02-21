@@ -1,3 +1,4 @@
+import { Account, AccountJWT } from '../entity/user.class';
 import { Request, Body, Controller, Get, HttpException, HttpStatus, NotFoundException, Param, Post, UsePipes, ValidationPipe, UseGuards, UnauthorizedException } from "@nestjs/common";
 import { UserService } from "../service/user.service";
 import { User } from "../entity/user.entity";
@@ -27,8 +28,14 @@ export class UserController {
     @Get('account')
     @ApiTags('User')
     @UseGuards(JwtAuthGuard)
-    async myAccount(@Request() req : any){
-        return await this.UsersService.findOneById(req.user.id);
+    async myAccount(@Request() req : any): Promise<Account>{
+        const user = await this.UsersService.findOneById(req.user.id);
+        if (!user) {
+            throw new NotFoundException();
+        }
+        const user2 =  new Account(user.id, user.email, user.role, user.name, user.firstname);
+        return user2;
+
     }
 
     @Get(':id')
@@ -65,27 +72,34 @@ export class UserController {
         }
         return await this.UsersService.updateRole(user, body.role);
     }
-    
-
 
     @Post('register')
     @ApiTags('User')
     @UsePipes(ValidationPipe)
-    async create(@Body() user: CreateUserDTO): Promise<User> {
+    async create(@Body() user: CreateUserDTO){
         const user2 = await this.UsersService.findOneByEmail(user.email);
         if (user2) {
             throw new HttpException("Email already exists", HttpStatus.FORBIDDEN);
         } else if (user.password != user.confirmpassword) {
             throw new HttpException("Passwords do not match", HttpStatus.FORBIDDEN);
         }
-        return this.UsersService.create(user);
+        const user3 = await this.UsersService.create(user);
+        const jwt = await this.AuthService.register(user3.id);
+        const jwtAccount = new AccountJWT(user3.id, user3.email, user3.role, user3.name, user3.firstname, jwt.access_token);
+        return jwtAccount;
     }
 
     @Post('login')
     @ApiTags('User')
     @UsePipes(ValidationPipe)
     async login(@Body() user: LoginUserDTO) {
-        return this.AuthService.login(user);
+        const user2 = await this.UsersService.findOneByEmail(user.email);
+        if (!user2) {
+            throw new HttpException("Account does not exist", HttpStatus.FORBIDDEN);
+        }
+        const jwt = await this.AuthService.login(user);
+        const jwtAccount = new AccountJWT(user2.id, user2.email, user2.role, user2.name, user2.firstname, jwt.access_token);
+        return jwtAccount;
     }
 
   }
