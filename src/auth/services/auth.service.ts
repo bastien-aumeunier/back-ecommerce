@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable} from "@nestjs/common";
 import { UserService } from "src/user/service/user.service";
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -25,7 +25,7 @@ export class AuthService {
   async login(use: any) {
     const user = await this.validateUser(use.email, use.password)
     if (!user) {
-        throw new UnauthorizedException();
+        throw new HttpException("Account does not exist", HttpStatus.FORBIDDEN)
     }
     const payload = { id: user.id, role: user.role };
     return {

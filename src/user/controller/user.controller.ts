@@ -1,4 +1,4 @@
-import { Account, AccountJWT } from '../entity/user.class';
+import { Account, AccountJWT } from '../model/user.model';
 import { Request, Body, Controller, Get, HttpException, HttpStatus, NotFoundException, Param, Post, UsePipes, ValidationPipe, UseGuards, UnauthorizedException } from "@nestjs/common";
 import { UserService } from "../service/user.service";
 import { User } from "../entity/user.entity";
@@ -76,7 +76,8 @@ export class UserController {
     @Post('register')
     @ApiTags('User')
     @UsePipes(ValidationPipe)
-    async create(@Body() user: CreateUserDTO){
+    async create(@Body() user: CreateUserDTO): Promise<AccountJWT>{
+        user.email = user.email.toLowerCase()
         const user2 = await this.UsersService.findOneByEmail(user.email);
         if (user2) {
             throw new HttpException("Email already exists", HttpStatus.FORBIDDEN);
@@ -85,20 +86,21 @@ export class UserController {
         }
         const user3 = await this.UsersService.create(user);
         const jwt = await this.AuthService.register(user3.id);
-        const jwtAccount = new AccountJWT(user3.id, user3.email, user3.role, user3.name, user3.firstname, jwt.access_token);
+        const jwtAccount = new AccountJWT(user3.id, user3.name, user3.firstname, user3.email, user3.role,  jwt.access_token);
         return jwtAccount;
     }
 
     @Post('login')
     @ApiTags('User')
     @UsePipes(ValidationPipe)
-    async login(@Body() user: LoginUserDTO) {
+    async login(@Body() user: LoginUserDTO): Promise<AccountJWT> {
+        user.email = user.email.toLowerCase()
         const user2 = await this.UsersService.findOneByEmail(user.email);
         if (!user2) {
             throw new HttpException("Account does not exist", HttpStatus.FORBIDDEN);
         }
         const jwt = await this.AuthService.login(user);
-        const jwtAccount = new AccountJWT(user2.id, user2.email, user2.role, user2.name, user2.firstname, jwt.access_token);
+        const jwtAccount = new AccountJWT(user2.id, user2.name, user2.firstname, user2.email, user2.role,  jwt.access_token);
         return jwtAccount;
     }
 
