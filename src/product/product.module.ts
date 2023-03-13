@@ -11,6 +11,6 @@ import { SizeModule } from 'src/size/size.module';
     imports: [TypeOrmModule.forFeature([Product]), forwardRef(()=> BrandModule), forwardRef(()=> CategoryModule), forwardRef(()=> SizeModule)],
     controllers: [ProductController],
     providers: [ProductService],
-    exports: [],
+    exports: [ProductService],
 })
 export class ProductModule {}
