@@ -22,7 +22,7 @@ export class UserController {
         if (req.user.role != "Admin") {
             throw new UnauthorizedException();
         }
-        return this.UsersService.findAll();
+        return await this.UsersService.findAll();
     }
 
     @Get('account')
