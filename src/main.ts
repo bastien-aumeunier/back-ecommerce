@@ -1,3 +1,4 @@
+import * as bodyParser from 'body-parser'
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -12,7 +13,7 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/swagger', app, document);
-
+  app.use('/orders/finish-checkout', bodyParser.raw({type: 'application/json'}))
   await app.listen(8080);
 }
 bootstrap();
