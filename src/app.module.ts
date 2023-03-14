@@ -1,3 +1,5 @@
+import { StripeModule } from './stripe/stripe.module';
+import { OrderModule } from './order/order.module';
 import { CartModule } from './cart/cart.module';
 import { BrandModule } from './brand/brand.module';
 import { Module } from '@nestjs/common';
@@ -6,6 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { ProductModule } from './product/product.module';
 import { CategoryModule } from './category/category.module';
+import { AddressModule } from './address/address.module';
 
 @Module({
   imports: [
@@ -31,6 +34,9 @@ import { CategoryModule } from './category/category.module';
     BrandModule,
     CategoryModule,
     CartModule,
+    AddressModule,
+    OrderModule,
+    //StripeModule,
   ],
   controllers: [],
   providers: [],
