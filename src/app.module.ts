@@ -1,5 +1,5 @@
-import { StripeModule } from './stripe/stripe.module';
-import { OrderModule } from './order/order.module';
+//import { StripeModule } from './stripe/stripe.module';
+//import { OrderModule } from './order/order.module';
 import { CartModule } from './cart/cart.module';
 import { BrandModule } from './brand/brand.module';
 import { Module } from '@nestjs/common';
@@ -35,7 +35,7 @@ import { AddressModule } from './address/address.module';
     CategoryModule,
     CartModule,
     AddressModule,
-    OrderModule,
+    //OrderModule,
     //StripeModule,
   ],
   controllers: [],
