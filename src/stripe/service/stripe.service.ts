@@ -19,7 +19,7 @@ export class StripeService {
             desc+= `${element.productQuantity}x ${element.productName.toLocaleLowerCase()} + `
         });
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: parseInt(price),
+            amount: parseInt(price)*100,
             currency: 'eur',
             automatic_payment_methods: {enabled: true}, //paiement par carte config sur le dashboard
             description: desc, //faire la desc avec les produits
