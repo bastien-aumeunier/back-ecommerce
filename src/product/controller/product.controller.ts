@@ -1,5 +1,5 @@
 import { CreateProductDTO, CreateReductionDTO, RemoveReductionDTO } from '../dto/product.dto';
-import { Controller, Get, UnauthorizedException, UseGuards, Request, Param, NotFoundException, Post, UsePipes, ValidationPipe, Body, Delete, HttpException, HttpStatus } from "@nestjs/common";
+import { Controller, Get, UnauthorizedException, UseGuards, Request, Param, NotFoundException, Post, UsePipes, ValidationPipe, Body, Delete, HttpException, HttpStatus, ForbiddenException } from "@nestjs/common";
 import { Product } from "../entity/product.entity";
 import { JwtAuthGuard } from "src/auth/guard/jwt-auth.guard";
 import { ProductService } from "../service/product.service";
@@ -28,7 +28,7 @@ export class ProductController {
     @ApiTags('Produits')
     async findOne(@Param('id') id: string): Promise<Product> {
         if(!verifyUUID(id) ) {
-            throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
+            throw new ForbiddenException('Invalid UUID')
         }
         const product = await this.ProductService.findOneById(id);
         if (!product) {
@@ -37,9 +37,13 @@ export class ProductController {
         return product;
     }
 
+    //get all product from brand
     @Get('brand/:id')
     @ApiTags('Marque')
     async findByBrand(@Param('id') id: string): Promise<Product[]> {
+        if(!verifyUUID(id) ) {
+            throw new ForbiddenException('Invalid UUID')
+        }
         const brand = await this.BrandService.findOneById(id);
         if (!brand) {
             throw new NotFoundException("Brand not found");
@@ -47,9 +51,14 @@ export class ProductController {
         return await this.ProductService.findByBrand(brand.name);
     }
 
+
+    //get all product from a category
     @Get('category/:id')
     @ApiTags('Categories')
     async findByCategory(@Param('id') id: string): Promise<Product[]> {
+        if(!verifyUUID(id) ) {
+            throw new ForbiddenException('Invalid UUID')
+        }
         const category = await this.CategoryService.findOneById(id);
         if (!category) {
             throw new NotFoundException("Category not found");

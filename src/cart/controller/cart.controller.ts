@@ -1,4 +1,4 @@
-import { Body, UnauthorizedException, UseGuards, Controller, Get, Request, Post, NotFoundException, ValidationPipe, UsePipes, Res, Delete  } from '@nestjs/common';
+import { Body, UnauthorizedException, UseGuards, Controller, Get, Request, Post, NotFoundException, ValidationPipe, UsePipes, Res, Delete, ForbiddenException  } from '@nestjs/common';
 import { ReturnCart, ProductonCart } from './../model/cart.model';
 import { CartProduct } from './../entity/cartProducts.entity';
 import { ProductService } from './../../product/service/product.service';
@@ -7,6 +7,7 @@ import { CartService } from './../service/cart.service';
 import { JwtAuthGuard } from './../../auth/guard/jwt-auth.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { Cart } from '../entity/cart.entity';
+import verifyUUID from 'src/utils/uuid.verify';
 
 @Controller("carts")
 export class CartController {
@@ -71,6 +72,10 @@ export class CartController {
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
     async addCart(@Body() body: ATCDTO, @Request() req, @Res() res ) {
+        //verify if it's UUID
+        if(!verifyUUID(body.productId) ) {
+            throw new ForbiddenException('Invalid UUID')
+        }
         const product = await this.ProductService.findOneById(body.productId)
         if(!product){
             throw new NotFoundException("Product not Found")
@@ -108,6 +113,10 @@ export class CartController {
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
     async removeproduct(@Body() body: ATCDTO, @Request() req, @Res() res) {   
+        //verify if it's UUID
+        if(!verifyUUID(body.productId) ) {
+            throw new ForbiddenException('Invalid UUID')
+        }
         const product = await this.ProductService.findOneById(body.productId)
         if(!product){
             throw new NotFoundException("Product not Found")
@@ -149,6 +158,11 @@ export class CartController {
         //for each product of converted Cart 
 
         for(const productID of body.products){
+            //verify if it's UUID
+            if(!verifyUUID(productID) ) {
+                throw new ForbiddenException('Invalid UUID')
+            }
+            //look stock
             const prod = await this.ProductService.findOneById(productID)
             if(!prod){
                 throw new NotFoundException(`Product ${productID} not Found`)
