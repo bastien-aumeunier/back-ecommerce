@@ -55,4 +55,16 @@ export class ProductService {
     async deleteProduct(id: string) {
         await this.ProductRepository.delete(id)
     }
+
+    async addStock(id: string, stock: number): Promise<Product> {
+        const product = await this.ProductRepository.findOne({where: { id: id }})
+        product.stock += stock
+        return await this.ProductRepository.save(product)
+    }
+
+    async removeStock(id: string, stock: number): Promise<Product> {
+        const product = await this.ProductRepository.findOne({where: { id: id }})
+        product.stock -= stock
+        return await this.ProductRepository.save(product)
+    }
 }
