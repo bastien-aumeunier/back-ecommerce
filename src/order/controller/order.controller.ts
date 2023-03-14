@@ -78,7 +78,7 @@ export class OrderController {
             throw new UnauthorizedException("Can't use this address")
         }
         const cart = await this.CartService.findCartByCartID(body.cartID)
-        if (!cart || cart.userId != req.user.id) {
+        if (!cart || cart.userId != req.user.id || cart.isPaid) {
             throw new UnauthorizedException("Can't use this cart")
         }
         const cartProd = await this.CartService.findCartProductByCartID(cart.id)
