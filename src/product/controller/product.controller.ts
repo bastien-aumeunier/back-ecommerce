@@ -36,31 +36,26 @@ export class ProductController {
         }
         return product;
     }
-    //faire en sorte que sur la page produit on puisse changer de size
 
-    //faire une route multi query params
-    /*
-    @Get('brand/:name')
-    async findByBrand(@Param('name') name: string): Promise<Product[]> {
-        const brand = await this.BrandService.findOneByName(name);
+    @Get('brand/:id')
+    @ApiTags('Marque')
+    async findByBrand(@Param('id') id: string): Promise<Product[]> {
+        const brand = await this.BrandService.findOneById(id);
         if (!brand) {
             throw new NotFoundException("Brand not found");
         }
         return await this.ProductService.findByBrand(brand.name);
     }
 
-    @Get('category/:name')
-    async findByCategory(@Param('name') name: string): Promise<Product[]> {
-        const category = await this.CategoryService.findOneByName(name);
+    @Get('category/:id')
+    @ApiTags('Categories')
+    async findByCategory(@Param('id') id: string): Promise<Product[]> {
+        const category = await this.CategoryService.findOneById(id);
         if (!category) {
             throw new NotFoundException("Category not found");
         }
         return await this.ProductService.findByCategory(category.name);
     }
-    */
-
-
-
 
 
     @Post('new-product')
