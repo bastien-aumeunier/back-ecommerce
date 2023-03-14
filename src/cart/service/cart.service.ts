@@ -33,6 +33,18 @@ export class CartService {
         return await this.CartRepository.save(this.CartRepository.create(body))
     }
 
+    async setPaid(cartID: string){
+        const cart = await this.CartRepository.findOne({where: {id:cartID}})
+        cart.isPaid = true
+        return await this.CartRepository.save(cart)
+    }
+    
+    async setCartPrice(cartId:string, price: string){
+        const cart = await this.CartRepository.findOne({where:{id: cartId}})
+        cart.price = price
+        await this.CartRepository.save(cart)
+    }
+    
     async findCartProductByCartID(id: string) : Promise<CartProduct[]>{
         return await this.CartProductRepository.find({where:{cartId: id}})
     }
@@ -59,4 +71,6 @@ export class CartService {
         const cartProd = await this.CartProductRepository.findOne({where: [{cartId: cartId}, {productId: productId}]})
         await this.CartProductRepository.delete(cartProd.id)
     }
+
+
 }

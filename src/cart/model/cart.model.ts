@@ -1,4 +1,3 @@
-import { Product } from './../../product/entity/product.entity';
 export class CartProd {
     constructor(
         public cartId: string,
@@ -14,7 +13,7 @@ export class ReturnCart{
         public price: string,
         public isPaid: boolean,
         public createdAt: Date,
-        public products: Product[]
+        public products: ProductonCart[]
     ){}
 }
 

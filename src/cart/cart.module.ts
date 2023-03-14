@@ -10,5 +10,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   imports: [TypeOrmModule.forFeature([Cart]),TypeOrmModule.forFeature([CartProduct]),forwardRef(()=> ProductModule)],
   controllers: [CartController],
   providers: [CartService],
+  exports: [CartService]
 })
 export class CartModule {}
