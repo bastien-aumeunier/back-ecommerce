@@ -62,6 +62,7 @@ export class CartController {
                 const percent = (parseFloat(test.price)*element.quantity)*test.reduction/100
                 price += (parseFloat(test.price)*element.quantity)-percent
             }
+            await this.CartService.setCartPrice(cart.id, price.toFixed(2).toString()) //a tester
          return new ReturnCart(cart.id, cart.userId, price.toFixed(2).toString(), cart.isPaid, cart.createdAt, products)
     }
 
@@ -106,7 +107,7 @@ export class CartController {
     @ApiTags('Panier')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
-    async removeproduct(@Body() body: ATCDTO, @Request() req, @Res() res) {
+    async removeproduct(@Body() body: ATCDTO, @Request() req, @Res() res) {   
         const product = await this.ProductService.findOneById(body.productId)
         if(!product){
             throw new NotFoundException("Product not Found")
@@ -146,7 +147,8 @@ export class CartController {
         }
         cart = await this.CartService.findCurrentCartByUserId(req.user.id)
         //for each product of converted Cart 
-        body.products.forEach(async productID => {
+
+        for(const productID of body.products){
             const prod = await this.ProductService.findOneById(productID)
             if(!prod){
                 throw new NotFoundException(`Product ${productID} not Found`)
@@ -166,8 +168,8 @@ export class CartController {
                     await this.CartService.createProductCart(cartProduct)
                 }
             }
-        });
-        // le await du rediect marche pas encore
+
+        }
         await res.redirect('my-cart')
     }
 

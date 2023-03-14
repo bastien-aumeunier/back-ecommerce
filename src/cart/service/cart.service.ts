@@ -23,10 +23,10 @@ export class CartService {
     }
 
     async findCurrentCartByUserId(id: string): Promise<Cart>{
-        return await this.CartRepository.findOne({where: [{userId: id}, {isPaid: false}]})
+        return await this.CartRepository.findOne({where: {userId: id, isPaid: false }})
     }
     async findAllCartByUserId(id: string): Promise<Cart[]>{
-        return await this.CartRepository.find({where: [{userId: id}, {isPaid: false}]})
+        return await this.CartRepository.find({where: {userId: id}})
     }
     
     async createCart(body: Cart): Promise<Cart> {
@@ -49,7 +49,7 @@ export class CartService {
         return await this.CartProductRepository.find({where:{cartId: id}})
     }
     async findCartProductByCartIDProductID(cartId: string, productId: string): Promise<CartProduct>{
-            return await this.CartProductRepository.findOne({where: [{cartId: cartId}, {productId: productId}]})
+            return await this.CartProductRepository.findOne({where: {cartId: cartId, productId: productId}})
     }
 
     async createProductCart(body: CartProd): Promise<CartProduct>{
@@ -57,18 +57,18 @@ export class CartService {
     }
 
     async addQuantitytoProductCart(cartId: string, productId: string): Promise<CartProduct>{
-        const cartProd =  await this.CartProductRepository.findOne({where: [{cartId: cartId}, {productId: productId}]})
+        const cartProd =  await this.CartProductRepository.findOne({where: {cartId: cartId, productId: productId}})
         cartProd.quantity ++
         return await this.CartProductRepository.save(cartProd)
     }
 
     async removeQuantitytoProductCart(cartId: string, productId: string): Promise<CartProduct>{
-        const cartProd =  await this.CartProductRepository.findOne({where: [{cartId: cartId}, {productId: productId}]})
+        const cartProd =  await this.CartProductRepository.findOne({where: {cartId: cartId, productId: productId}})
         cartProd.quantity --
         return await this.CartProductRepository.save(cartProd)
     }
     async removeProductCart(cartId:string, productId:string){
-        const cartProd = await this.CartProductRepository.findOne({where: [{cartId: cartId}, {productId: productId}]})
+        const cartProd = await this.CartProductRepository.findOne({where: {cartId: cartId, productId: productId}})
         await this.CartProductRepository.delete(cartProd.id)
     }
 
