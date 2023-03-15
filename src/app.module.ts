@@ -1,3 +1,4 @@
+import { FavorisModule } from './favoris/favoris.module';
 import { StripeModule } from './stripe/stripe.module';
 import { OrderModule } from './order/order.module';
 import { CartModule } from './cart/cart.module';
@@ -37,6 +38,7 @@ import { AddressModule } from './address/address.module';
     AddressModule,
     OrderModule,
     StripeModule,
+    FavorisModule,
   ],
   controllers: [],
   providers: [],
