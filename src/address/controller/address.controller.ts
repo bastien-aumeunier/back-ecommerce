@@ -1,5 +1,5 @@
 import { Role } from 'src/user/entity/user.entity';
-import { Controller, Get, Request, UseGuards, UnauthorizedException, Body, Post, UsePipes, ValidationPipe, Res, Delete, NotFoundException, Param, ForbiddenException, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Request, UseGuards, Body, Post, UsePipes, ValidationPipe, Res, Delete, NotFoundException, Param, ForbiddenException, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateAddressDTO, RemoveAddressDTO } from './../dto/address.dto';
 import { JwtAuthGuard } from './../../auth/guard/jwt-auth.guard';
@@ -19,7 +19,7 @@ export class AddressController {
     @UseGuards(JwtAuthGuard)
     async findAll(@Request() req : any):Promise<Address[]>{
         if(req.user.role != "Admin"){
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         }
         return await this.AddressService.findAll()
     }
@@ -83,7 +83,7 @@ export class AddressController {
         if(!address){
             throw new NotFoundException("Address doesn't exist")
         } else if( address.userId != req.user.id){
-            throw new UnauthorizedException("You can't remove this Address")
+            throw new ForbiddenException("You can't remove this Address")
         }else {
             await this.AddressService.removeAddress(address.id)
         }

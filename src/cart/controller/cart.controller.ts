@@ -1,4 +1,4 @@
-import { Body, UnauthorizedException, UseGuards, Controller, Get, Request, Post, NotFoundException, ValidationPipe, UsePipes, Res, Delete, ForbiddenException  } from '@nestjs/common';
+import { Body, UseGuards, Controller, Get, Request, Post, NotFoundException, ValidationPipe, UsePipes, Res, Delete, ForbiddenException  } from '@nestjs/common';
 import { ReturnCart, ProductonCart } from './../model/cart.model';
 import { CartProduct } from './../entity/cartProducts.entity';
 import { ProductService } from './../../product/service/product.service';
@@ -21,7 +21,7 @@ export class CartController {
     @UseGuards(JwtAuthGuard)
     async findAll(@Request() req : any):Promise<ReturnCart[]> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         }
         const allCarts = []
         const allCart = await this.CartService.findAll();
@@ -80,7 +80,7 @@ export class CartController {
         if(!product){
             throw new NotFoundException("Product not Found")
         } else if(product.stock == 0) {
-            throw new UnauthorizedException("Product don't have stock")
+            throw new ForbiddenException("Product don't have stock")
         } else {
             let cart = await this.CartService.findCurrentCartByUserId(req.user.id)
             if(!cart){
@@ -167,7 +167,7 @@ export class CartController {
             if(!prod){
                 throw new NotFoundException(`Product ${productID} not Found`)
             } else if(prod.stock == 0) {
-                throw new UnauthorizedException(`Product ${productID} don't have stock`)
+                throw new ForbiddenException(`Product ${productID} don't have stock`)
             } else {
                 const CartProd = await this.CartService.findCartProductByCartIDProductID(cart.id, productID)
                 if(CartProd){

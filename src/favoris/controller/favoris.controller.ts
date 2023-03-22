@@ -1,4 +1,4 @@
-import { Controller, Get, UnauthorizedException, UseGuards, Request, ValidationPipe, Body, UsePipes, Post, Res, ForbiddenException, Delete, Param } from '@nestjs/common';
+import { Controller, Get, UseGuards, Request, ValidationPipe, Body, UsePipes, Post, Res, ForbiddenException, Delete, Param } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { isUUID } from 'class-validator';
 import verifyUUID from 'src/utils/uuid.verify';
@@ -21,7 +21,7 @@ export class FavorisController {
     @UseGuards(JwtAuthGuard)
     async findAll(@Request() req : any): Promise<Favoris[]> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         }
         return await this.FavorisService.findAll();
     }
@@ -44,7 +44,7 @@ export class FavorisController {
     @UseGuards(JwtAuthGuard)
     async findFavorisByUser(@Request() req: any, @Param('id') id : string): Promise<ProductFavoris[]> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         } else if(!verifyUUID(id)) {
             throw new ForbiddenException('Invalid UUID')
         }

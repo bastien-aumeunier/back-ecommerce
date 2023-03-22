@@ -1,4 +1,4 @@
-import { Controller, Request, UseGuards, Get, Param, UnauthorizedException, HttpException, HttpStatus, NotFoundException, Body, ValidationPipe, UsePipes, Post, Delete } from "@nestjs/common";
+import { Controller, Request, UseGuards, Get, Param, ForbiddenException, HttpException, HttpStatus, NotFoundException, Body, ValidationPipe, UsePipes, Post, Delete } from "@nestjs/common";
 import { JwtAuthGuard } from "src/auth/guard/jwt-auth.guard";
 import verifyUUID from "src/utils/uuid.verify";
 import { CreateSizeDTO } from "../dto/size.dto";
@@ -35,7 +35,7 @@ export class SizeController {
     @UseGuards(JwtAuthGuard)
     async findOneById(@Param('id') id: string, @Request() req: any): Promise<Size> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         } else if (!verifyUUID(id)) {
             throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
         }
@@ -52,7 +52,7 @@ export class SizeController {
     @UsePipes(ValidationPipe)
     async create(@Request() req: any, @Body() body: CreateSizeDTO) {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         }
         const size = await this.SizeService.findOneByTypeAndValue(body.category, body.size);
         if (size) {
@@ -70,7 +70,7 @@ export class SizeController {
     @UseGuards(JwtAuthGuard)
     async deleteSize(@Param('id') id: string, @Request() req: any): Promise<Size[]> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         } else if (!verifyUUID(id)) {
             throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
         }

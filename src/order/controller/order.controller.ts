@@ -3,7 +3,7 @@ import { ProductQuantity } from './../../stripe/model/stripe.model';
 import { CreateOrderDTO } from './../dto/order.dto';
 import { ProductService } from './../../product/service/product.service';
 import { Role } from './../../user/entity/user.entity';
-import { Controller, Get, UnauthorizedException, UseGuards, Request, Param, UsePipes, ValidationPipe, Body, Post, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, UseGuards, Request, Param, UsePipes, ValidationPipe, Body, Post, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CartService } from './../../cart/service/cart.service';
 import { AddressService } from './../../address/service/address.service';
@@ -28,7 +28,7 @@ export class OrderController {
     @UseGuards(JwtAuthGuard)
     async findAll(@Request() req : any): Promise<Order[]> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         }
         return await this.OrderService.findAll();
     }
@@ -59,7 +59,7 @@ export class OrderController {
         if (req.user.role == Role.Admin || order.userID == req.user.id) {
             return new ReturnOrder(order.id, order.userID, order.cartID, order.addressID, order.status, order.price, order.date, products)
         }
-        throw new UnauthorizedException()
+        throw new ForbiddenException()
     }
 
 
@@ -75,11 +75,11 @@ export class OrderController {
         //verify if all info is good
         const address = await this.AddressService.findById(body.addressID)
         if (!address || address.userId != req.user.id) {
-            throw new UnauthorizedException("Can't use this address")
+            throw new ForbiddenException("Can't use this address")
         }
         const cart = await this.CartService.findCartByCartID(body.cartID)
         if (!cart || cart.userId != req.user.id || cart.isPaid) {
-            throw new UnauthorizedException("Can't use this cart")
+            throw new ForbiddenException("Can't use this cart")
         }
         const cartProd = await this.CartService.findCartProductByCartID(cart.id)
         const listProduct = []

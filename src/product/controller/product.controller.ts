@@ -1,5 +1,5 @@
 import { CreateProductDTO, CreateReductionDTO, RemoveReductionDTO } from '../dto/product.dto';
-import { Controller, Get, UnauthorizedException, UseGuards, Request, Param, NotFoundException, Post, UsePipes, ValidationPipe, Body, Delete, HttpException, HttpStatus, ForbiddenException } from "@nestjs/common";
+import { Controller, Get, UseGuards, Request, Param, NotFoundException, Post, UsePipes, ValidationPipe, Body, Delete, HttpException, HttpStatus, ForbiddenException } from "@nestjs/common";
 import { Product } from "../entity/product.entity";
 import { JwtAuthGuard } from "src/auth/guard/jwt-auth.guard";
 import { ProductService } from "../service/product.service";
@@ -73,7 +73,7 @@ export class ProductController {
     @UsePipes(ValidationPipe)
     async create(@Request() req : any, @Body() body : CreateProductDTO) {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         }
         const brand = await this.BrandService.findOneByName(body.brand);
         const category = await this.CategoryService.findOneByName(body.category);
@@ -94,7 +94,7 @@ export class ProductController {
     @UsePipes(ValidationPipe)
     async setReduction(@Request() req : any, @Body() body : CreateReductionDTO) {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         } else if(!verifyUUID(body.id) ) {
             throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
         }
@@ -111,7 +111,7 @@ export class ProductController {
     @UsePipes(ValidationPipe)
     async removeReduction(@Request() req : any, @Body() body : RemoveReductionDTO) {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         } else if(!verifyUUID(body.id) ) {
             throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
         }
@@ -127,7 +127,7 @@ export class ProductController {
     @UseGuards(JwtAuthGuard)
     async delete(@Param('id') id, @Request() req :any): Promise<Product[]> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         } else if(!verifyUUID(id) ) {
             throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
         }

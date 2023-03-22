@@ -1,6 +1,6 @@
 import { Category } from './../entity/category.entity';
 import { CategoryService } from './../service/category.service';
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, NotFoundException, Param, Post, Request, UnauthorizedException, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, NotFoundException, Param, Post, Request, ForbiddenException, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
 import { JwtAuthGuard } from "src/auth/guard/jwt-auth.guard";
 import { CreateCategoryDTO } from '../dto/category.dto';
 import verifyUUID from 'src/utils/uuid.verify';
@@ -23,7 +23,7 @@ export class CategoryController {
     @UseGuards(JwtAuthGuard)
     async findOneById(@Param('id') id: string, @Request() req : any): Promise<Category> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         } else if(!verifyUUID(id) ) {
             throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
         }
@@ -40,7 +40,7 @@ export class CategoryController {
     @UsePipes(ValidationPipe)
     async create(@Request() req : any, @Body() body : CreateCategoryDTO) {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         }
         const category = await this.CategoryService.findOneByName(body.name);
         if (category) {
@@ -54,7 +54,7 @@ export class CategoryController {
     @UseGuards(JwtAuthGuard)
     async deleteCategory(@Param('id') id: string, @Request() req :any): Promise<Category[]> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         } else if(!verifyUUID(id) ) {
             throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
         }

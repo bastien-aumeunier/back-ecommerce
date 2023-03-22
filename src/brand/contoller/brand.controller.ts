@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, NotFoundException, Param, Post, Request, UnauthorizedException, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, NotFoundException, Param, Post, Request, ForbiddenException, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/auth/guard/jwt-auth.guard";
 import verifyUUID from "src/utils/uuid.verify";
@@ -24,7 +24,7 @@ export class BrandController {
     @UseGuards(JwtAuthGuard)
     async findOneById(@Param('id') id: string, @Request() req : any): Promise<Brand> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         } else if(!verifyUUID(id) ) {
             throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
         }
@@ -41,7 +41,7 @@ export class BrandController {
     @UsePipes(ValidationPipe)
     async create(@Request() req : any, @Body() body : CreateBrandDTO) {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         }
         const brand = await this.BrandService.findOneByName(body.name);
         if (brand) {
@@ -55,7 +55,7 @@ export class BrandController {
     @UseGuards(JwtAuthGuard)
     async deleteBrand(@Param('id') id: string, @Request() req :any): Promise<Brand[]> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         }else if(!verifyUUID(id) ) {
             throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
         }
