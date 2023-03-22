@@ -1,11 +1,12 @@
 import { Role } from 'src/user/entity/user.entity';
-import { Controller, Get, Request, UseGuards, UnauthorizedException, Body, Post, UsePipes, ValidationPipe, Res, Delete, NotFoundException, Param, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Request, UseGuards, UnauthorizedException, Body, Post, UsePipes, ValidationPipe, Res, Delete, NotFoundException, Param, ForbiddenException, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateAddressDTO, RemoveAddressDTO } from './../dto/address.dto';
 import { JwtAuthGuard } from './../../auth/guard/jwt-auth.guard';
 import { AddressService } from './../service/address.service';
 import { Address, civility } from './../entity/address.entity';
 import verifyUUID from 'src/utils/uuid.verify';
+import verifyTel from 'src/utils/tel.verify';
 
 @Controller('address')
 export class AddressController {
@@ -33,10 +34,7 @@ export class AddressController {
     @Get('my-address/:id')
     @ApiTags('Adresse')
     @UseGuards(JwtAuthGuard)
-    async findMyAddress(@Request() req: any, @Param('id') id: string):Promise<Address>{
-        if(!verifyUUID(id) ) {
-            throw new ForbiddenException('Invalid UUID')
-        }
+    async findMyAddress(@Request() req: any, @Param('id', new ParseUUIDPipe()) id: string):Promise<Address>{
         const address = await this.AddressService.findById(id)
         if (!address || address.userId != req.user.id || req.user.role != Role.Admin) {
             throw new NotFoundException('Address not found')
@@ -50,6 +48,13 @@ export class AddressController {
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
     async create(@Request()req: any, @Body() body : CreateAddressDTO) : Promise<Address> {
+        const address: Address = await this.AddressService.findByUserName(req.user.id, body.addressName)
+        if (address) {
+            throw new ForbiddenException(`You have already address with name : ${body.addressName}`)
+        }
+        if(!verifyTel(body.tel)){
+            throw new ForbiddenException('Invalid Tel Number')
+        }
         const newAddress = new Address()
         newAddress.userId = req.user.id
         newAddress.addressName = body.addressName.toLowerCase()

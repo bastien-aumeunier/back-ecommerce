@@ -17,6 +17,10 @@ export class AddressService {
         return await this.AddressRepository.find({where: {userId: id}})
     }
 
+    async findByUserName(userID: string, name:string): Promise<Address> {
+        return await this.AddressRepository.findOne({where : {userId: userID, addressName: name}})
+    }
+
     async findById(id: string): Promise<Address>{
         return await this.AddressRepository.findOne({where: {id: id}})
     }
