@@ -14,7 +14,6 @@ export class BrandController {
 
     @Get()
     @ApiTags('Marque')
-    @UseGuards(JwtAuthGuard)
     async findAll(): Promise<Brand[]> {
         return this.BrandService.findAll();
     }
