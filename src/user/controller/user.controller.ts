@@ -1,12 +1,14 @@
+import * as bcrypt from 'bcrypt';
+import { Request, Body, Controller, Get, HttpException, HttpStatus, NotFoundException, Param, Post, UsePipes, ValidationPipe, UseGuards, ForbiddenException, ParseUUIDPipe } from "@nestjs/common";
 import { Account, AccountJWT } from '../model/user.model';
-import { Request, Body, Controller, Get, HttpException, HttpStatus, NotFoundException, Param, Post, UsePipes, ValidationPipe, UseGuards, UnauthorizedException } from "@nestjs/common";
 import { UserService } from "../service/user.service";
 import { User } from "../entity/user.entity";
-import { CreateUserDTO, LoginUserDTO, UpdateRoleDTO } from "../dto/user.dto";
+import { CreateUserDTO, LoginUserDTO, UpdateRoleDTO, ChangePasswordDTO, ChangeDTO } from "../dto/user.dto";
 import { AuthService } from '../../auth/services/auth.service';
 import { JwtAuthGuard } from "src/auth/guard/jwt-auth.guard";
 import verifyUUID from "src/utils/uuid.verify";
 import { ApiTags } from "@nestjs/swagger";
+
 
 @Controller('users')
 export class UserController {
@@ -20,7 +22,7 @@ export class UserController {
     @UseGuards(JwtAuthGuard)
     async findAll(@Request() req : any): Promise<User[]> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         }
         return await this.UsersService.findAll();
     }
@@ -28,31 +30,26 @@ export class UserController {
     @Get('account')
     @ApiTags('User')
     @UseGuards(JwtAuthGuard)
-    async myAccount(@Request() req : any): Promise<Account>{
+    async myAccount(@Request() req : any ){
         const user = await this.UsersService.findOneById(req.user.id);
         if (!user) {
-            throw new NotFoundException();
+            throw new NotFoundException('User not found');
         }
-        const user2 =  new Account(user.id, user.email, user.role, user.name, user.firstname);
-        return user2;
-
+        return new Account(user.id, user.email, user.role, user.name, user.firstname);
     }
 
     @Get(':id')
     @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
-    async findOne(@Param('id') id, @Request() req :any): Promise<User> {
+    async findOne(@Param('id', new ParseUUIDPipe()) id: string, @Request() req:any): Promise<Account> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
-        }  else if(!verifyUUID(id) ) {
-            throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
-        } 
+            throw new ForbiddenException();
+        }
         const user = await this.UsersService.findOneById(id);
         if (!user) {
-            throw new NotFoundException();
+            throw new NotFoundException('User not found');
         }
-        user.password = ""
-        return user;
+        return new Account(user.id, user.name, user.firstname, user.email, user.role)
     }
 
 
@@ -60,48 +57,100 @@ export class UserController {
     @ApiTags('Admin')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
-    async setRole(@Body() body : UpdateRoleDTO, @Request() req :any) {
+    async setRole(@Body() body : UpdateRoleDTO, @Request() req :any): Promise<Account> {
         if (req.user.role != "Admin") {
-            throw new UnauthorizedException();
+            throw new ForbiddenException();
         } else if(!verifyUUID(body.id) ) {
-            throw new HttpException("Invalid UUID", HttpStatus.FORBIDDEN);
+            throw new ForbiddenException('Invalid UUID')
         }
-        const user = await this.UsersService.findOneById(body.id);
+        let user = await this.UsersService.findOneById(body.id);
         if (!user) {
-            throw new NotFoundException();
+            throw new NotFoundException('User not found');
         }
-        return await this.UsersService.updateRole(user, body.role);
+        user = await this.UsersService.updateRole(user.id, body.role);
+        return new Account(user.id, user.name, user.firstname, user.email, user.role)
     }
 
     @Post('register')
     @ApiTags('User')
     @UsePipes(ValidationPipe)
-    async create(@Body() user: CreateUserDTO): Promise<AccountJWT>{
-        user.email = user.email.toLowerCase()
-        const user2 = await this.UsersService.findOneByEmail(user.email);
-        if (user2) {
-            throw new HttpException("Email already exists", HttpStatus.FORBIDDEN);
-        } else if (user.password != user.confirmpassword) {
-            throw new HttpException("Passwords do not match", HttpStatus.FORBIDDEN);
+    async create(@Body() body: CreateUserDTO): Promise<AccountJWT>{
+        body.email = body.email.toLowerCase()
+        const findUser = await this.UsersService.findOneByEmail(body.email);
+        if (findUser) {
+            throw new ForbiddenException('Email already exists')
+        } else if (body.password != body.confirmpassword) {
+            throw new ForbiddenException('Passwords do not match')
         }
-        const user3 = await this.UsersService.create(user);
-        const jwt = await this.AuthService.register(user3.id);
-        const jwtAccount = new AccountJWT(user3.id, user3.name, user3.firstname, user3.email, user3.role,  jwt.access_token);
+        //send info to register service and return user with jwt
+        const user = await this.UsersService.create(body);
+        const jwt = await this.AuthService.register(user.id);
+        const jwtAccount = new AccountJWT(user.id, user.name, user.firstname, user.email, user.role,  jwt.access_token);
         return jwtAccount;
     }
 
     @Post('login')
     @ApiTags('User')
     @UsePipes(ValidationPipe)
-    async login(@Body() user: LoginUserDTO): Promise<AccountJWT> {
-        user.email = user.email.toLowerCase()
-        const user2 = await this.UsersService.findOneByEmail(user.email);
-        if (!user2) {
+    async login(@Body() body: LoginUserDTO): Promise<AccountJWT> {
+        body.email = body.email.toLowerCase()
+        const user = await this.UsersService.findOneByEmail(body.email);
+        if (!user) {
             throw new HttpException("Account does not exist", HttpStatus.FORBIDDEN);
         }
-        const jwt = await this.AuthService.login(user);
-        const jwtAccount = new AccountJWT(user2.id, user2.name, user2.firstname, user2.email, user2.role,  jwt.access_token);
+        //send info to login service and return user with jwt
+        const jwt = await this.AuthService.login(body);
+        const jwtAccount = new AccountJWT(user.id, user.name, user.firstname, user.email, user.role,  jwt.access_token);
         return jwtAccount;
     }
 
-  }
+    @Post('change-password')
+    @ApiTags('User')
+    @UsePipes(ValidationPipe)
+    @UseGuards(JwtAuthGuard)
+    async changePassword(@Body() body: ChangePasswordDTO, @Request() req: any): Promise<Account> {
+        const user = await this.UsersService.findOneById(req.user.id)
+        if (!user) {
+            throw new NotFoundException('User not Found')
+        }
+        //verify if new password is the same
+        if(body.newPassword!== body.confirmNewPassword){
+            throw new ForbiddenException('Passwords do not match')
+            
+        }
+        //verify if old password is same as new password
+        if(bcrypt.compareSync(body.oldPassword, user.password)){
+            await this.UsersService.changePWD(user.id, body.newPassword)
+        }
+        return new Account(user.id, user.name, user.firstname, user.email, user.role)
+    }
+
+    @Post('change-profil')
+    @ApiTags('User')
+    @UsePipes(ValidationPipe)
+    @UseGuards(JwtAuthGuard)
+    async changeEmail(@Body() body: ChangeDTO, @Request() req: any): Promise<Account> {
+        const user = await this.UsersService.findOneById(req.user.id);
+        if (!user) {
+            throw new NotFoundException('User not Found');
+        }
+        //change user info with type: mail/name/firstname
+        switch (body.type.toLowerCase()) {
+            case 'mail':
+                const finduser = await this.UsersService.findOneByEmail(body.new);
+                if(finduser){
+                    throw new ForbiddenException('Already account bind with this mail');
+                }
+                await this.UsersService.changeProfil(user.id, body.new,'mail');
+                return new Account(user.id, user.name, user.firstname, body.new, user.role);
+            case 'name':
+               await this.UsersService.changeProfil(user.id, body.new,'name');
+               return new Account(user.id, body.new, user.firstname, user.email, user.role)
+            case 'firstname':
+               await this.UsersService.changeProfil(user.id, body.new,'firstname');
+               return new Account(user.id, user.name, body.new, user.email, user.role)
+            default:
+                throw new ForbiddenException('Type is not equals to mail or name or firstname')
+        }
+    }
+}
