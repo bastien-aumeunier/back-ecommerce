@@ -31,11 +31,13 @@ export class UserController {
     @ApiTags('User')
     @UseGuards(JwtAuthGuard)
     async myAccount(@Request() req : any ){
+        console.log('account')
+        console.log(req)
         const user = await this.UsersService.findOneById(req.user.id);
         if (!user) {
             throw new NotFoundException('User not found');
         }
-        return new Account(user.id, user.email, user.role, user.name, user.firstname);
+        return new Account(user.id, user.name, user.firstname, user.email, user.role);
     }
 
     @Get(':id')
