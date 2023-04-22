@@ -8,6 +8,15 @@ export class ATCDTO {
 
 export class ConvertCartDTO{
     @IsNotEmpty()
-    @ApiProperty({description: 'list of ProductID'})
-    products : string[];
+    @ApiProperty({description: 'ProductID'})
+    productId : string;
+    @IsNotEmpty()
+    @ApiProperty({description: 'quantity'})
+    productQuantity : number;
+}
+
+export class ListConvertCartDTO{
+    @IsNotEmpty()
+    @ApiProperty({description: 'list of ConvertCartDTO'})
+    products : ConvertCartDTO[];
 }

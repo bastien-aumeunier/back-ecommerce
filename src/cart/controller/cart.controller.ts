@@ -1,8 +1,8 @@
-import { Body, UseGuards, Controller, Get, Request, Post, NotFoundException, ValidationPipe, UsePipes, Res, Delete, ForbiddenException  } from '@nestjs/common';
+import { Body, UseGuards, Controller, Get, Request, Post, NotFoundException, ValidationPipe, UsePipes, Delete, ForbiddenException  } from '@nestjs/common';
 import { ReturnCart, ProductonCart } from './../model/cart.model';
 import { CartProduct } from './../entity/cartProducts.entity';
 import { ProductService } from './../../product/service/product.service';
-import { ATCDTO, ConvertCartDTO } from './../dto/cart.dto';
+import { ATCDTO, ListConvertCartDTO } from './../dto/cart.dto';
 import { CartService } from './../service/cart.service';
 import { JwtAuthGuard } from './../../auth/guard/jwt-auth.guard';
 import { ApiTags } from '@nestjs/swagger';
@@ -71,7 +71,7 @@ export class CartController {
     @ApiTags('Panier')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
-    async addCart(@Body() body: ATCDTO, @Request() req, @Res() res ) {
+    async addCart(@Body() body: ATCDTO, @Request() req):Promise<ReturnCart>{
         //verify if it's UUID
         if(!verifyUUID(body.productId) ) {
             throw new ForbiddenException('Invalid UUID')
@@ -104,7 +104,17 @@ export class CartController {
                 cartProduct.quantity= 1
                 await this.CartService.createProductCart(cartProduct)
             }
-            await res.redirect('my-cart')
+            const products = []
+            const cartProd = await this.CartService.findCartProductByCartID(cart.id)
+            let price = 0
+            for (const element of cartProd) {
+                const test = await this.ProductService.findOneById(element.productId)
+                products.push(new ProductonCart(test.id, test.name, test.image, test.price, test.brand, test.description, test.reduction, test.category, test.size, element.quantity))
+                const percent = (parseFloat(test.price)*element.quantity)*test.reduction/100
+                price += (parseFloat(test.price)*element.quantity)-percent
+            }
+            await this.CartService.setCartPrice(cart.id, price.toFixed(2).toString()) //a tester
+            return new ReturnCart(cart.id, cart.userId, price.toFixed(2).toString(), cart.isPaid, cart.createdAt, products)
         }
     }
 
@@ -112,7 +122,7 @@ export class CartController {
     @ApiTags('Panier')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
-    async removeproduct(@Body() body: ATCDTO, @Request() req, @Res() res) {   
+    async removeproduct(@Body() body: ATCDTO, @Request() req):Promise<ReturnCart> {   
         //verify if it's UUID
         if(!verifyUUID(body.productId) ) {
             throw new ForbiddenException('Invalid UUID')
@@ -136,7 +146,17 @@ export class CartController {
         } else {
             throw new NotFoundException("Product not in cart")
         }
-        await res.redirect('my-cart')
+        const products = []
+            const cartProd = await this.CartService.findCartProductByCartID(cart.id)
+            let price = 0
+            for (const element of cartProd) {
+                const test = await this.ProductService.findOneById(element.productId)
+                products.push(new ProductonCart(test.id, test.name, test.image, test.price, test.brand, test.description, test.reduction, test.category, test.size, element.quantity))
+                const percent = (parseFloat(test.price)*element.quantity)*test.reduction/100
+                price += (parseFloat(test.price)*element.quantity)-percent
+            }
+            await this.CartService.setCartPrice(cart.id, price.toFixed(2).toString()) //a tester
+         return new ReturnCart(cart.id, cart.userId, price.toFixed(2).toString(), cart.isPaid, cart.createdAt, products)
 
     }
 
@@ -144,7 +164,7 @@ export class CartController {
     @ApiTags('Panier')
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
-    async syncCart(@Body() body: ConvertCartDTO, @Request() req,@Res() res){
+    async syncCart(@Body() body: ListConvertCartDTO, @Request() req):Promise<ReturnCart>{
         let cart = await this.CartService.findCurrentCartByUserId(req.user.id)
         if(!cart){
             //Create Cart
@@ -155,36 +175,70 @@ export class CartController {
             await this.CartService.createCart(newCart)
         }
         cart = await this.CartService.findCurrentCartByUserId(req.user.id)
-        //for each product of converted Cart 
 
-        for(const productID of body.products){
-            //verify if it's UUID
-            if(!verifyUUID(productID) ) {
-                throw new ForbiddenException('Invalid UUID')
-            }
-            //look stock
-            const prod = await this.ProductService.findOneById(productID)
-            if(!prod){
-                throw new NotFoundException(`Product ${productID} not Found`)
-            } else if(prod.stock == 0) {
-                throw new ForbiddenException(`Product ${productID} don't have stock`)
-            } else {
-                const CartProd = await this.CartService.findCartProductByCartIDProductID(cart.id, productID)
-                if(CartProd){
-                    //add 1 to quantity
-                    await this.CartService.addQuantitytoProductCart(cart.id, productID)
-                } else {
-                    //add product to cart
+        const listCartProd = await this.CartService.findAllCartByUserId(req.user.id)
+        //si tout le panier était en local
+        if (listCartProd.length == 0) {
+            for(const products of body.products){
+                if(!verifyUUID(products.productId) ) {
+                    throw new ForbiddenException('Invalid UUID')
+                }
+                const prod = await this.ProductService.findOneById(products.productId)
+                //on verif si le produit exist et le stock dispo
+                if(!prod){
+                    throw new NotFoundException(`Product ${products.productId} not Found`)
+                } else if(prod.stock- products.productQuantity < 0) {
+                    throw new ForbiddenException(`Product ${products.productId} don't have stock`)
+                }else{
+                    //on les creer dans le panier
                     const cartProduct = new CartProduct()
                     cartProduct.cartId = cart.id
-                    cartProduct.productId= productID
-                    cartProduct.quantity= 1
+                    cartProduct.productId= products.productId
+                    cartProduct.quantity= products.productQuantity
                     await this.CartService.createProductCart(cartProduct)
                 }
             }
-
+            //si certain article étaient deja dans le panier
+        } else {
+            for(const products of body.products){
+                if(!verifyUUID(products.productId) ) {
+                    throw new ForbiddenException('Invalid UUID')
+                }
+                const prod = await this.ProductService.findOneById(products.productId)
+                //on verif si le produit exist et le stock dispo
+                if(!prod){
+                    throw new NotFoundException(`Product ${products.productId} not Found`)
+                } else {
+                    if(prod.stock- products.productQuantity < 0) {
+                        throw new ForbiddenException(`Product ${products.productId} don't have stock`)
+                    } else {
+                        const CartProd = await this.CartService.findCartProductByCartIDProductID(cart.id, products.productId)
+                        if(!CartProd){                            
+                            const cartProduct = new CartProduct()
+                            cartProduct.cartId = cart.id
+                            cartProduct.productId= products.productId
+                            cartProduct.quantity= products.productQuantity
+                            await this.CartService.createProductCart(cartProduct)
+                        } else {
+                            for (let index = 0; index < products.productQuantity; index++) {
+                                await this.CartService.addQuantitytoProductCart(cart.id, products.productId)
+                            }
+                        }
+                    }
+                }
+            }
         }
-        await res.redirect('my-cart')
+        const products = []
+            const cartProd = await this.CartService.findCartProductByCartID(cart.id)
+            let price = 0
+            for (const element of cartProd) {
+                const test = await this.ProductService.findOneById(element.productId)
+                products.push(new ProductonCart(test.id, test.name, test.image, test.price, test.brand, test.description, test.reduction, test.category, test.size, element.quantity))
+                const percent = (parseFloat(test.price)*element.quantity)*test.reduction/100
+                price += (parseFloat(test.price)*element.quantity)-percent
+            }
+            await this.CartService.setCartPrice(cart.id, price.toFixed(2).toString()) //a tester
+         return new ReturnCart(cart.id, cart.userId, price.toFixed(2).toString(), cart.isPaid, cart.createdAt, products)
     }
 
 }
