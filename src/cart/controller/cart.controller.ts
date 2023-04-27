@@ -177,7 +177,7 @@ export class CartController {
         cart = await this.CartService.findCurrentCartByUserId(req.user.id)
 
         const listCartProd = await this.CartService.findAllCartByUserId(req.user.id)
-        //si tout le panier était en local
+        //si l'user avait 0 artcile dans le panier cloud
         if (listCartProd.length == 0) {
             for(const products of body.products){
                 if(!verifyUUID(products.productId) ) {
@@ -220,7 +220,8 @@ export class CartController {
                             cartProduct.quantity= products.productQuantity
                             await this.CartService.createProductCart(cartProduct)
                         } else {
-                            for (let index = 0; index < products.productQuantity; index++) {
+                            let diffQuantity = products.productQuantity- CartProd.quantity
+                            for (let index = 0; index < diffQuantity; index++) {
                                 await this.CartService.addQuantitytoProductCart(cart.id, products.productId)
                             }
                         }

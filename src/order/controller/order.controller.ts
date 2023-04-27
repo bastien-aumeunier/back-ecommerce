@@ -1,3 +1,4 @@
+import { UserService } from './../../user/service/user.service';
 import { StripeService } from './../../stripe/service/stripe.service';
 import { ProductQuantity } from './../../stripe/model/stripe.model';
 import { CreateOrderDTO } from './../dto/order.dto';
@@ -20,7 +21,8 @@ export class OrderController {
         private readonly AddressService: AddressService,
         private readonly CartService: CartService,
         private readonly ProductService: ProductService,
-        private readonly StripeService: StripeService
+        private readonly StripeService: StripeService,
+        private readonly UserService: UserService
     ){}
 
     @Get()
@@ -72,6 +74,7 @@ export class OrderController {
         if(!verifyUUID(body.addressID) ||!verifyUUID(body.cartID) ) {
             throw new ForbiddenException('Invalid UUID')
         }
+        const user = await this.UserService.findOneById(req.user.id)
         //verify if all info is good
         const address = await this.AddressService.findById(body.addressID)
         if (!address || address.userId != req.user.id) {
@@ -104,7 +107,7 @@ export class OrderController {
         newOrder.status= Status.pending
         const order = await this.OrderService.create(newOrder)
         //create stripe paiement
-        return await this.StripeService.createPayment(price.toFixed(2).toString(), req.user.id, body.addressID, listProduct, order.id)
+        return await this.StripeService.createPayment(price.toFixed(2).toString(), req.user.id, body.addressID, listProduct, order.id, user.email)
     }
 
 

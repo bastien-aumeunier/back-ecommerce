@@ -10,7 +10,7 @@ export class StripeService {
     public config: ConfigService;
 
 
-    async createPayment(price: string, userId: string, addressID: string, products: ProductQuantity[], orderID: string): Promise<ReturnStripe>{
+    async createPayment(price: string, userId: string, addressID: string, products: ProductQuantity[], orderID: string, email: string): Promise<ReturnStripe>{
         
         const stripe = new Stripe(this.config.get('STRIPE_SECRET_TEST'), {apiVersion: "2022-11-15"}) //Ne pas oublier de passer avec la vrai clé
 
@@ -29,9 +29,10 @@ export class StripeService {
                 userId: userId, 
                 addressID: addressID,
                 orderID: orderID
-            }
+            },
+            receipt_email:email
         })
-        return new ReturnStripe(paymentIntent.client_secret, this.config.get('STRIPE_PUBLIC_TEST')) //Ne pas oublier de passer avec la vrai clé
+        return new ReturnStripe(paymentIntent.client_secret) //Ne pas oublier de passer avec la vrai clé
     }
 
     async listenWebhook(body: any, sig:string){

@@ -7,7 +7,6 @@ export class ProductQuantity {
 }
 export class ReturnStripe {
     constructor(
-        public clientSecret: any,
-        public publishable_key: any
+        public clientSecret: string,
     ){}
 }
