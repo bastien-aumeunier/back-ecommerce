@@ -8,6 +8,7 @@ import { BrandService } from "src/brand/service/brand.service";
 import { CategoryService } from "src/category/service/category.service";
 import { SizeService } from "src/size/service/size.service";
 import { ApiTags } from '@nestjs/swagger';
+import { CategoryWithProducts } from 'src/category/model/category.model';
 
 @Controller('products')
 export class ProductController { 
@@ -24,18 +25,7 @@ export class ProductController {
         return this.ProductService.findAll();
     }
 
-    @Get(':id')
-    @ApiTags('Produits')
-    async findOne(@Param('id') id: string): Promise<Product> {
-        if(!verifyUUID(id) ) {
-            throw new ForbiddenException('Invalid UUID')
-        }
-        const product = await this.ProductService.findOneById(id);
-        if (!product) {
-            throw new NotFoundException();
-        }
-        return product;
-    }
+    
 
     //get all product from brand
     @Get('brand/:id')
@@ -51,6 +41,18 @@ export class ProductController {
         return await this.ProductService.findByBrand(brand.name);
     }
 
+    //get all product from all categories
+    @Get('categories')
+    @ApiTags('Categories')
+    async findAllCategoriesWithProduct(): Promise<CategoryWithProducts[]> {
+        const categories = await this.CategoryService.findAll();
+        const returnCategory = [];
+        for(const categorie of categories) {
+            const products = await this.ProductService.findByCategory(categorie.name);
+            returnCategory.push(new CategoryWithProducts(categorie.id, categorie.name, products));
+        }
+        return returnCategory;
+    }
 
     //get all product from a category
     @Get('category/:id')
@@ -64,6 +66,20 @@ export class ProductController {
             throw new NotFoundException("Category not found");
         }
         return await this.ProductService.findByCategory(category.name);
+    }
+
+    //get a product by id
+    @Get(':id')
+    @ApiTags('Produits')
+    async findOne(@Param('id') id: string): Promise<Product> {
+        if(!verifyUUID(id) ) {
+            throw new ForbiddenException('Invalid UUID')
+        }
+        const product = await this.ProductService.findOneById(id);
+        if (!product) {
+            throw new NotFoundException();
+        }
+        return product;
     }
 
 

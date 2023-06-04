@@ -44,9 +44,3 @@ export class CreateAddressDTO {
     tel: string;
 
 }
-
-export class RemoveAddressDTO{
-    @IsNotEmpty()
-    @ApiProperty({description: `id de l'adresse`})
-    addressID: string;
-}
